@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NZ Budget Planner</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1f2933;--muted:#6b7280;--line:#e5e1d8;--accent:#2f6f5e;--accent-soft:#e3efe9;--danger:#b4442f;--warn:#c98a1b}
+@media (prefers-color-scheme:dark){:root{--bg:#141716;--card:#1d2120;--ink:#ece9e2;--muted:#9aa29e;--line:#2c3230;--accent:#6cc0a3;--accent-soft:#1f322b;--danger:#e0735c;--warn:#e2b04f}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45}
+a{color:var(--accent)}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+h1{margin:0;font-size:1.6rem}
+h2{font-size:1rem;margin:0 0 12px}
+.sub{color:var(--muted);font-size:.9rem;margin:2px 0 0}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tab{border:none;background:none;padding:10px 14px;border-bottom:2px solid transparent;border-radius:0;color:var(--muted);font-weight:600}
+.tab.active{color:var(--ink);border-bottom-color:var(--accent)}
+.hidden{display:none}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+input,select,button{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);min-width:0}
+button{cursor:pointer}
+.btn{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+@media (prefers-color-scheme:dark){.btn{color:#10201a}}
+.ghost{background:transparent}
+.grid{display:grid;gap:12px}
+.stats{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+.grid .card{margin-bottom:0}
+.stat .label{color:var(--muted);font-size:.85rem}
+.stat .val{font-size:1.35rem;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.two{grid-template-columns:1fr 1fr;margin-bottom:12px}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+form.add{display:grid;grid-template-columns:130px 1.4fr 1fr 130px auto;gap:8px}
+@media(max-width:760px){form.add{grid-template-columns:1fr 1fr}form.add .desc{grid-column:1/-1}form.add .btn{grid-column:1/-1}}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{color:var(--muted);font-weight:500;font-size:.8rem}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:4px}
+.bar span{display:block;height:100%;background:var(--accent)}
+.over .bar span{background:var(--danger)}
+.near .bar span{background:var(--warn)}
+.budget-in{width:110px;text-align:right}
+.del{border:none;background:none;color:var(--muted);padding:2px 6px}
+.del:hover{color:var(--danger)}
+.pos{color:var(--accent)} .neg{color:var(--danger)}
+.tag{font-size:.75rem;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.tag.out{background:transparent;border:1px solid var(--line);color:var(--muted)}
+.chart-box{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.legend{list-style:none;padding:0;margin:0;font-size:.88rem;flex:1;min-width:180px}
+.legend li{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.empty{color:var(--muted);text-align:center;padding:16px}
+.rule .row{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.rule .row.head{color:var(--muted);font-size:.8rem}
+.rule .row span:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+.note{color:var(--muted);font-size:.82rem;margin:10px 0 0}
+.foot{display:flex;gap:8px;flex-wrap:wrap}
+/* guide */
+.kids{display:grid;grid-template-columns:160px 1fr;gap:8px;margin-top:12px}
+.kids-ages{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.kids select{width:100%}
+.kids label{font-size:.8rem;color:var(--muted);display:block;margin-bottom:4px}
+@media(max-width:600px){.kids{grid-template-columns:1fr}}
+.hidden{display:none !important}
+
+.picker{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+@media(max-width:600px){.picker{grid-template-columns:1fr}}
+.picker label{font-size:.8rem;color:var(--muted);display:block;margin-bottom:4px}
+.picker select{width:100%}
+.item-note{display:block;color:var(--muted);font-size:.78rem}
+.opt-row td:first-child{opacity:.95}
+.off td{color:var(--muted)}
+.off td.num{text-decoration:line-through}
+.chk{width:16px;height:16px;padding:0;margin:0 6px 0 0;vertical-align:-2px}
+.total-row td{font-weight:700;border-bottom:none}
+.callout{background:var(--accent-soft);border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px}
+.callout b{display:block;margin-bottom:4px}
+.cmp{display:grid;grid-template-columns:120px 1fr 90px;gap:8px;align-items:center;font-size:.88rem;padding:4px 0}
+.cmp .track{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.cmp .track span{display:block;height:100%;background:var(--accent);opacity:.55;border-radius:5px}
+.cmp.cur .track span{opacity:1}
+.cmp.cur{font-weight:700}
+.cmp .v{text-align:right;font-variant-numeric:tabular-nums}
+ul.tips{margin:8px 0 0;padding-left:18px;font-size:.9rem}
+ul.tips li{margin:4px 0}
+.sources{font-size:.82rem;color:var(--muted)}
+.sources a{word-break:break-word}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>NZ Budget Planner</h1>
+      <p class="sub">Track your money and see what life costs across New Zealand.</p>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="planner">Budget Planner</button>
+    <button class="tab" data-tab="guide">Cost of Living Guide</button>
+  </nav>
+
+  <!-- ============ PLANNER ============ -->
+  <main id="planner">
+    <div class="controls" style="margin-bottom:12px">
+      <input type="month" id="month" aria-label="Month">
+      <select id="currency" aria-label="Currency">
+        <option value="NZD">NZD</option>
+        <option value="IDR">IDR</option>
+        <option value="AUD">AUD</option>
+        <option value="USD">USD</option>
+      </select>
+    </div>
+
+    <section class="grid stats">
+      <div class="card stat"><div class="label">Income</div><div class="val" id="sIncome">–</div></div>
+      <div class="card stat"><div class="label">Expenses</div><div class="val" id="sExpense">–</div></div>
+      <div class="card stat"><div class="label">Money left</div><div class="val" id="sLeft">–</div></div>
+      <div class="card stat"><div class="label">Savings rate</div><div class="val" id="sRate">–</div></div>
+    </section>
+
+    <section class="card">
+      <h2>Add a transaction</h2>
+      <form class="add" id="addForm">
+        <select id="fType" aria-label="Type">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+        <input id="fDesc" class="desc" placeholder="Description (e.g. Countdown)" required>
+        <select id="fCat" aria-label="Category"></select>
+        <input id="fAmt" type="number" min="0" step="0.01" placeholder="Amount" required>
+        <button class="btn" type="submit">Add</button>
+      </form>
+    </section>
+
+    <section class="grid two">
+      <div class="card">
+        <h2>Spending by category</h2>
+        <div class="chart-box">
+          <canvas id="chart" width="200" height="200" style="width:200px;height:200px"></canvas>
+          <ul class="legend" id="legend"></ul>
+        </div>
+      </div>
+      <div class="card rule">
+        <h2>50/30/20 check</h2>
+        <div class="row head"><span>Group</span><span>Target</span><span>Actual</span></div>
+        <div id="ruleRows"></div>
+        <p class="note">50% needs, 30% wants, 20% savings — based on this month's total income.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Monthly budget by category</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Category</th><th class="num">Budget</th><th class="num">Spent</th><th class="num">Remaining</th></tr></thead>
+          <tbody id="budgetBody"></tbody>
+        </table>
+      </div>
+      <p class="note">Tip: open the Cost of Living Guide and press “Use as my budget” to pre-fill these numbers.</p>
+    </section>
+
+    <section class="card">
+      <h2>This month's transactions</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Description</th><th>Category</th><th class="num">Amount</th><th></th></tr></thead>
+          <tbody id="txBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="foot">
+      <button class="ghost" id="exportBtn">Export CSV</button>
+      <button class="ghost" id="resetBtn">Clear this month's transactions</button>
+    </div>
+  </main>
+
+  <!-- ============ GUIDE ============ -->
+  <main id="guide" class="hidden">
+    <section class="card">
+      <div class="picker">
+        <div>
+          <label for="gCity">City</label>
+          <select id="gCity"></select>
+        </div>
+        <div>
+          <label for="gSeg">Your situation</label>
+          <select id="gSeg"></select>
+        </div>
+      </div>
+      <div id="kidsBox" class="kids hidden">
+        <div>
+          <label for="kCount">Number of children</label>
+          <select id="kCount"><option value="1">1 child</option><option value="2">2 children</option><option value="3">3 children</option></select>
+        </div>
+        <div id="kAges" class="kids-ages"></div>
+      </div>
+      <p class="note" id="gHousehold"></p>
+    </section>
+
+    <section class="grid stats">
+      <div class="card stat"><div class="label">Estimated per month</div><div class="val" id="gMonth">–</div></div>
+      <div class="card stat"><div class="label">Per week</div><div class="val" id="gWeek">–</div></div>
+      <div class="card stat"><div class="label">Per year</div><div class="val" id="gYear">–</div></div>
+    </section>
+
+    <section class="card">
+      <h2 id="gTitle">Monthly breakdown</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Category</th><th class="num">NZD / month</th></tr></thead>
+          <tbody id="gBody"></tbody>
+        </table>
+      </div>
+      <p class="note">Tick or untick the optional items to match your situation. Tuition fees are not included.</p>
+      <div class="callout" id="gIncome"></div>
+      <div class="foot" style="margin-top:12px">
+        <button class="btn" id="useBudget">Use as my budget</button>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <div class="card">
+        <h2>Same situation, other cities</h2>
+        <div id="gCompare"></div>
+      </div>
+      <div class="card">
+        <h2>Good to know</h2>
+        <ul class="tips" id="gTips"></ul>
+      </div>
+    </section>
+
+    <section class="card sources">
+      <h2 style="color:var(--ink)">About these numbers</h2>
+      <p>Estimates are in NZD per month and reflect late-2026 conditions. Rents are typical asking rents for each city, based on the Trade Me Rental Price Index (August 2026: national median $625/week, Auckland $660, Otago $700, Canterbury $600, Wellington $600) and Tenancy Services bond data. Other lines are rounded benchmarks for a moderate lifestyle; your suburb, home size and habits will move them a lot. Always check official sources before making visa or money decisions.</p>
+      <p>
+        <a href="https://www.trademe.co.nz/c/property/news" target="_blank" rel="noopener">Trade Me Rental Price Index</a> ·
+        <a href="https://www.tenancy.govt.nz/rent-bond-and-bills/market-rent/" target="_blank" rel="noopener">Tenancy Services market rent</a> ·
+        <a href="https://www.workandincome.govt.nz/eligibility/seniors/superannuation/how-much-you-can-get" target="_blank" rel="noopener">NZ Super rates</a> ·
+        <a href="https://www.mbie.govt.nz/about/news/minimum-wage-set-for-2026" target="_blank" rel="noopener">Minimum wage 2026</a> ·
+        <a href="https://www.powerswitch.org.nz/finding-the-best-power-plan/power-prices-nz" target="_blank" rel="noopener">Powerswitch power prices</a> ·
+        <a href="https://www.immigration.govt.nz/new-zealand-visas/visas/visa/dependent-child-student-visa" target="_blank" rel="noopener">Dependent Child Student Visa</a> ·
+        <a href="https://www.immigration.govt.nz/live/resident-visas-to-live-in-new-zealand/skilled-residence-pathways-in-new-zealand/skilled-migrant-category-pathway-to-residence/2026-changes-to-the-skilled-migrant-category-resident-visa/" target="_blank" rel="noopener">SMC 2026 changes</a> · <a href="https://www.education.govt.nz/early-learning/" target="_blank" rel="noopener">20 Hours ECE</a>
+      </p>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ---------- shared ---------- */
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+
+const C={RENT:"Rent / Housing",FOOD:"Food & Groceries",TRANS:"Transport",BILLS:"Bills & Utilities",KIDS:"Kids & School",HEALTH:"Health & Insurance",STUDY:"Study & Visa",FUN:"Entertainment & Dining",SHOP:"Shopping & Personal",SAVE:"Savings & Investments",OTHER:"Other"};
+const EXP_CATS=Object.values(C);
+const INC_CATS=["Salary / Wages","Side income","NZ Super / Benefits","Other"];
+const GROUP={[C.RENT]:"needs",[C.FOOD]:"needs",[C.TRANS]:"needs",[C.BILLS]:"needs",[C.KIDS]:"needs",[C.HEALTH]:"needs",[C.STUDY]:"needs",[C.FUN]:"wants",[C.SHOP]:"wants",[C.OTHER]:"wants",[C.SAVE]:"savings"};
+const COLORS=["#2f6f5e","#e07a5f","#3d5a80","#f2cc8f","#81b29a","#b56576","#6d597a","#98c1d9","#c9a227","#5c8d89","#9aa29e"];
+
+/* ---------- planner state ---------- */
+const KEY="nz-budget-planner-v2";
+let state=load();
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.tx))return s;}catch(e){}
+  return {currency:"NZD",tx:[],budgets:{}};
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+
+const now=new Date();
+$("month").value=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+$("currency").value=state.currency||"NZD";
+
+function fmt(n){
+  const c=state.currency||"NZD";
+  return new Intl.NumberFormat(c==="IDR"?"id-ID":"en-NZ",{style:"currency",currency:c,maximumFractionDigits:c==="IDR"?0:2}).format(n||0);
+}
+const nzd0=new Intl.NumberFormat("en-NZ",{style:"currency",currency:"NZD",maximumFractionDigits:0});
+const fmtNZ=n=>nzd0.format(n||0);
+
+function fillCats(){
+  const cats=$("fType").value==="income"?INC_CATS:EXP_CATS;
+  $("fCat").innerHTML=cats.map(c=>`<option>${esc(c)}</option>`).join("");
+}
+function monthTx(){return state.tx.filter(t=>t.month===$("month").value);}
+
+function render(){
+  const txs=monthTx();
+  const income=txs.filter(t=>t.type==="income").reduce((a,t)=>a+t.amount,0);
+  const exp=txs.filter(t=>t.type==="expense");
+  const expense=exp.reduce((a,t)=>a+t.amount,0);
+  const left=income-expense;
+  const byCat={};EXP_CATS.forEach(c=>byCat[c]=0);
+  exp.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
+  const saved=byCat[C.SAVE]+Math.max(left,0);
+
+  $("sIncome").textContent=fmt(income);
+  $("sExpense").textContent=fmt(expense);
+  $("sLeft").textContent=fmt(left);
+  $("sLeft").className="val "+(left<0?"neg":"pos");
+  $("sRate").textContent=income>0?Math.round(saved/income*100)+"%":"–";
+
+  $("budgetBody").innerHTML=EXP_CATS.map(c=>{
+    const b=Number(state.budgets[c])||0, spent=byCat[c]||0, rem=b-spent;
+    const pct=b>0?Math.min(spent/b*100,100):0;
+    const cls=b>0&&spent>b?"over":(b>0&&spent>=b*0.8?"near":"");
+    return `<tr class="${cls}">
+      <td>${esc(c)}<div class="bar"><span style="width:${pct}%"></span></div></td>
+      <td class="num"><input class="budget-in" type="number" min="0" step="1" data-cat="${esc(c)}" value="${b||""}" placeholder="0"></td>
+      <td class="num">${fmt(spent)}</td>
+      <td class="num ${b>0&&rem<0?"neg":""}">${b>0?fmt(rem):"–"}</td></tr>`;
+  }).join("");
+  const totalBudget=EXP_CATS.reduce((a,c)=>a+(Number(state.budgets[c])||0),0);
+  if(totalBudget>0){
+    $("budgetBody").innerHTML+=`<tr class="total-row"><td>Total</td><td class="num">${fmt(totalBudget)}</td><td class="num">${fmt(expense)}</td><td class="num ${totalBudget-expense<0?"neg":""}">${fmt(totalBudget-expense)}</td></tr>`;
+  }
+
+  $("txBody").innerHTML=txs.length?txs.slice().reverse().map(t=>`<tr>
+      <td>${esc(t.desc)}</td>
+      <td><span class="tag ${t.type==="expense"?"out":""}">${esc(t.cat)}</span></td>
+      <td class="num ${t.type==="income"?"pos":""}">${t.type==="income"?"+":"−"}${fmt(t.amount)}</td>
+      <td class="num"><button class="del" data-id="${t.id}" aria-label="Delete">✕</button></td></tr>`).join("")
+    :`<tr><td colspan="4" class="empty">No transactions this month yet.</td></tr>`;
+
+  const g={needs:0,wants:0,savings:0};
+  EXP_CATS.forEach(c=>g[GROUP[c]]+=byCat[c]||0);
+  g.savings+=Math.max(left,0);
+  const rows=[["Needs (50%)","needs",.5],["Wants (30%)","wants",.3],["Savings (20%)","savings",.2]];
+  $("ruleRows").innerHTML=rows.map(([label,k,p])=>{
+    const ideal=income*p, act=g[k];
+    const bad=k==="savings"?act<ideal:act>ideal;
+    return `<div class="row"><span>${label}</span><span>${fmt(ideal)}</span><span class="${income>0?(bad?"neg":"pos"):""}">${fmt(act)}${income>0?" ("+Math.round(act/income*100)+"%)":""}</span></div>`;
+  }).join("");
+
+  drawChart(byCat,expense);
+}
+
+function drawChart(byCat,total){
+  const cv=$("chart"),dpr=window.devicePixelRatio||1,size=200;
+  cv.width=size*dpr;cv.height=size*dpr;
+  const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,size,size);
+  const cx=size/2,cy=size/2,r=90,inner=58;
+  const entries=EXP_CATS.map((c,i)=>[c,byCat[c]||0,COLORS[i]]).filter(e=>e[1]>0);
+  if(!total){
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.arc(cx,cy,inner,0,Math.PI*2,true);
+    ctx.fillStyle="rgba(128,128,128,.15)";ctx.fill();
+  }else{
+    let a=-Math.PI/2;
+    entries.forEach(([,v,col])=>{
+      const end=a+v/total*Math.PI*2;
+      ctx.beginPath();ctx.arc(cx,cy,r,a,end);ctx.arc(cx,cy,inner,end,a,true);ctx.closePath();
+      ctx.fillStyle=col;ctx.fill();a=end;
+    });
+  }
+  ctx.fillStyle=getComputedStyle(document.body).color;ctx.textAlign="center";ctx.font="600 14px system-ui,sans-serif";
+  ctx.fillText(fmt(total),cx,cy+5);
+  $("legend").innerHTML=entries.length?entries.map(([c,v,col])=>
+    `<li><span><span class="dot" style="background:${col}"></span>${esc(c)}</span><span>${Math.round(v/total*100)}%</span></li>`).join("")
+    :`<li class="empty">No expenses yet.</li>`;
+}
+
+$("fType").addEventListener("change",fillCats);
+$("addForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const amount=parseFloat($("fAmt").value);
+  if(!(amount>0))return;
+  state.tx.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    type:$("fType").value,desc:$("fDesc").value.trim(),cat:$("fCat").value,amount,month:$("month").value});
+  save();$("fDesc").value="";$("fAmt").value="";$("fDesc").focus();render();
+});
+$("txBody").addEventListener("click",e=>{
+  const id=e.target.dataset&&e.target.dataset.id;if(!id)return;
+  state.tx=state.tx.filter(t=>t.id!==id);save();render();
+});
+$("budgetBody").addEventListener("change",e=>{
+  const cat=e.target.dataset&&e.target.dataset.cat;if(!cat)return;
+  state.budgets[cat]=parseFloat(e.target.value)||0;save();render();
+});
+$("month").addEventListener("change",render);
+$("currency").addEventListener("change",e=>{state.currency=e.target.value;save();render();});
+$("resetBtn").addEventListener("click",()=>{
+  if(confirm("Delete all transactions for this month?")){
+    const m=$("month").value;state.tx=state.tx.filter(t=>t.month!==m);save();render();
+  }
+});
+$("exportBtn").addEventListener("click",()=>{
+  const rows=[["Month","Type","Description","Category","Amount"]].concat(
+    state.tx.map(t=>[t.month,t.type==="income"?"Income":"Expense",t.desc,t.cat,t.amount]));
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download="budget.csv";a.click();URL.revokeObjectURL(a.href);
+});
+
+/* ---------- cost of living data ---------- */
+// Typical weekly asking rents (NZD) by home size, late 2026. pf = power/heating factor, gf = grocery factor,
+// pt = monthly public transport for a regular commuter, car = monthly car running cost, rates = monthly council rates.
+const CITIES={
+  auckland:{name:"Auckland",rent:{room:280,b1:450,b2:600,b3:720},pf:1.00,gf:1.05,pt:200,car:520,rates:330},
+  wellington:{name:"Wellington",rent:{room:260,b1:430,b2:560,b3:660},pf:0.95,gf:1.03,pt:220,car:480,rates:380},
+  christchurch:{name:"Christchurch",rent:{room:230,b1:380,b2:490,b3:600},pf:1.05,gf:1.00,pt:110,car:460,rates:320},
+  hamilton:{name:"Hamilton",rent:{room:220,b1:360,b2:460,b3:570},pf:1.00,gf:1.00,pt:100,car:460,rates:330},
+  dunedin:{name:"Dunedin",rent:{room:220,b1:360,b2:460,b3:570},pf:1.15,gf:1.00,pt:90,car:450,rates:310},
+  napier:{name:"Napier",rent:{room:230,b1:390,b2:500,b3:620},pf:1.00,gf:1.00,pt:80,car:450,rates:300},
+  palmerston:{name:"Palmerston North",rent:{room:210,b1:350,b2:450,b3:560},pf:1.00,gf:0.99,pt:80,car:440,rates:300},
+  invercargill:{name:"Invercargill",rent:{room:190,b1:300,b2:380,b3:470},pf:1.20,gf:0.98,pt:60,car:430,rates:270}
+};
+const W=x=>x*52/12;            // weekly -> monthly
+const ADULT=480, CHILD=280;     // monthly groceries per person (moderate)
+
+/* ---------- children ---------- */
+const STAGES={
+  baby:{name:"Newborn (0–2) · daycare",short:"newborn",food:0,items:n=>[
+    {id:`k${n}-baby`,label:`Child ${n}: baby essentials`,note:"Nappies, formula, clothes, car seat & gear",cat:C.KIDS,amt:()=>200},
+    {id:`k${n}-day`,label:`Child ${n}: daycare, 3 days a week`,note:"Under-2s cost the most because of stricter staff ratios; FamilyBoost may refund part",cat:C.KIDS,amt:()=>1300,opt:true,care:true}
+  ]},
+  ece:{name:"ECE / kindy (3–5)",short:"kindy age",food:CHILD*0.8,items:n=>[
+    {id:`k${n}-ece`,label:`Child ${n}: kindy / ECE fees`,note:"After 20 Hours ECE (free up to 6 hrs a day, 20 a week); extra hours & food cost more",cat:C.KIDS,amt:()=>600,opt:true,care:true}
+  ]},
+  school:{name:"School (5–18) · primary–high",short:"school age",food:CHILD,items:n=>[
+    {id:`k${n}-sch`,label:`Child ${n}: school costs`,note:"Donations, uniform, stationery, trips, devices",cat:C.KIDS,amt:()=>150},
+    {id:`k${n}-act`,label:`Child ${n}: activities`,note:"Sport, swimming, music",cat:C.KIDS,amt:()=>120}
+  ]}
+};
+let kids={ages:["ece","school"]};
+try{const k=JSON.parse(localStorage.getItem(KEY+"-kids"));if(k&&Array.isArray(k.ages)&&k.ages.length>=1&&k.ages.length<=3&&k.ages.every(a=>STAGES[a]))kids=k;}catch(e){}
+function saveKids(){try{localStorage.setItem(KEY+"-kids",JSON.stringify(kids));}catch(e){}}
+const nK=()=>kids.ages.length;
+const kidFood=()=>kids.ages.reduce((a,s)=>a+STAGES[s].food,0);
+const kidWord=()=>nK()>1?"kids":"kid";
+const kidsDesc=()=>`${nK()} ${nK()>1?"children":"child"} (${kids.ages.map(s=>STAGES[s].short).join(", ")})`;
+const homeLabel=()=>nK()<=1?"2-bedroom home":nK()===2?"3-bedroom house":"4-bedroom house";
+const homeRent=c=>W(nK()<=1?c.rent.b2:nK()===2?c.rent.b3:c.rent.b3*1.25);
+const studentHomeLabel=()=>nK()<=2?"2-bedroom flat":"3-bedroom house";
+const studentHomeRent=c=>W(nK()<=2?c.rent.b2:c.rent.b3);
+
+const SEGMENTS={
+  single:{name:"Single",household:"1 adult, working full-time, renting a room in a shared flat.",
+    items:[
+      {label:"Room in a shared flat",cat:C.RENT,amt:c=>W(c.rent.room)},
+      {label:"Groceries",cat:C.FOOD,amt:c=>ADULT*c.gf},
+      {label:"Power (your share)",cat:C.BILLS,amt:c=>70*c.pf},
+      {label:"Internet (your share)",cat:C.BILLS,amt:()=>25},
+      {label:"Mobile plan",cat:C.BILLS,amt:()=>35},
+      {label:"Public transport",cat:C.TRANS,amt:c=>c.pt},
+      {label:"Car running costs",note:"Fuel, rego, WOF, insurance, servicing — tick if you drive",cat:C.TRANS,amt:c=>c.car,opt:true,on:false},
+      {label:"GP visits & basic health insurance",cat:C.HEALTH,amt:()=>60},
+      {label:"Eating out & social",cat:C.FUN,amt:()=>250},
+      {label:"Clothes, gym & personal",cat:C.SHOP,amt:()=>180},
+      {label:"Student loan repayment",note:"If you have one: 12% of pay above the threshold, deducted by your employer",cat:C.STUDY,amt:()=>360,opt:true,on:false},
+      {label:"Savings / emergency fund",cat:C.SAVE,amt:()=>300}
+    ],
+    income:"A $60,000 salary is roughly $3,900/month take-home after tax, ACC levy and 3.5% KiwiSaver. The adult minimum wage is $23.95/hour from 1 April 2026 — about $4,150/month before tax for 40 hours a week.",
+    tips:["Flatting is the cheapest way to live in every city — the biggest swing in this budget is rent.","Join KiwiSaver: your employer adds at least 3.5% on top.","Build 3 months of expenses as an emergency fund before upgrading your lifestyle."]},
+
+  couple:{name:"Young married couple (no kids)",household:"2 adults, both working, renting a 1–2 bedroom flat, one car.",
+    items:[
+      {label:"1–2 bedroom flat",cat:C.RENT,amt:c=>W((c.rent.b1+c.rent.b2)/2)},
+      {label:"Groceries (2 adults)",cat:C.FOOD,amt:c=>2*ADULT*0.95*c.gf},
+      {label:"Power",cat:C.BILLS,amt:c=>160*c.pf},
+      {label:"Internet",cat:C.BILLS,amt:()=>80},
+      {label:"Mobile plans (2)",cat:C.BILLS,amt:()=>70},
+      {label:"Contents insurance",cat:C.BILLS,amt:()=>35},
+      {label:"Car running costs",note:"Fuel, rego, WOF, insurance, servicing",cat:C.TRANS,amt:c=>c.car},
+      {label:"Public transport (1 commuter)",cat:C.TRANS,amt:c=>c.pt},
+      {label:"Health insurance & GP",cat:C.HEALTH,amt:()=>150},
+      {label:"Eating out & dates",cat:C.FUN,amt:()=>400},
+      {label:"Clothes & personal",cat:C.SHOP,amt:()=>250},
+      {label:"Savings (house deposit / KiwiSaver)",cat:C.SAVE,amt:()=>800}
+    ],
+    income:"Two $60,000 salaries come to roughly $7,800/month take-home combined. KiwiSaver may be withdrawn for a first home deposit if you're eligible.",
+    tips:["Run one car if you can — the second car often costs more than people expect.","Agree on a shared ‘bills’ account and keep some personal spending money each.","Check first-home buyer options early so your savings target is realistic."]},
+
+  family:{name:"Married with kids",kids:true,careDefault:true,
+    household:()=>`2 adults, ${kidsDesc()}, renting a ${homeLabel().toLowerCase()}, one car.`,
+    items:[
+      {id:"home",label:homeLabel,cat:C.RENT,amt:homeRent},
+      {id:"food",label:()=>`Groceries (2 adults, ${nK()} ${kidWord()})`,cat:C.FOOD,amt:c=>(2*ADULT*0.95+kidFood())*c.gf},
+      {label:"Power",cat:C.BILLS,amt:c=>(200+30*nK())*c.pf},
+      {label:"Internet",cat:C.BILLS,amt:()=>80},
+      {label:"Mobile plans (2)",cat:C.BILLS,amt:()=>70},
+      {label:"Contents insurance",cat:C.BILLS,amt:()=>40},
+      {label:"Car running costs",cat:C.TRANS,amt:c=>c.car},
+      {label:"Public transport (1 commuter)",cat:C.TRANS,amt:c=>c.pt},
+      {kidsHere:true},
+      {label:"Health insurance & GP",note:"GP visits are usually free for children under 14",cat:C.HEALTH,amt:()=>160+30*nK()},
+      {label:"Family outings & eating out",cat:C.FUN,amt:()=>350},
+      {label:"Clothes & personal",cat:C.SHOP,amt:()=>220+40*nK()},
+      {label:"Savings",cat:C.SAVE,amt:()=>500}
+    ],
+    income:"Working for Families tax credits, 20 Hours ECE (ages 3–5), the WINZ Childcare Subsidy and FamilyBoost can lower your costs noticeably — check your eligibility with IRD and Work and Income.",
+    tips:["Untick daycare if a parent stays home with a newborn — it's the single biggest childcare cost.","20 Hours ECE covers up to 6 hours a day, 20 a week, for 3–5 year olds — centres may still charge for extra hours and food.","Public primary and secondary school is free for domestic students; ‘donations’ are voluntary but common."]},
+
+  retire:{name:"Retirement",household:"Couple aged 65+, own their home mortgage-free, one car.",
+    items:[
+      {label:"Council rates",cat:C.RENT,amt:c=>c.rates},
+      {label:"House maintenance",cat:C.RENT,amt:()=>150},
+      {label:"Rent instead (2-bedroom)",note:"Tick if you rent; untick rates & maintenance",cat:C.RENT,amt:c=>W(c.rent.b2),opt:true,on:false},
+      {label:"Home & contents insurance",cat:C.BILLS,amt:()=>180},
+      {label:"Groceries (2 adults)",cat:C.FOOD,amt:c=>2*ADULT*0.85*c.gf},
+      {label:"Power",cat:C.BILLS,amt:c=>200*c.pf},
+      {label:"Internet",cat:C.BILLS,amt:()=>70},
+      {label:"Mobile plans (2)",cat:C.BILLS,amt:()=>50},
+      {label:"Car running costs",note:"Less commuting; SuperGold gives free off-peak public transport",cat:C.TRANS,amt:c=>c.car*0.7},
+      {label:"Health insurance, GP & pharmacy",cat:C.HEALTH,amt:()=>400},
+      {label:"Hobbies, dining & social",cat:C.FUN,amt:()=>350},
+      {label:"Travel & grandkids",cat:C.FUN,amt:()=>250},
+      {label:"Clothes & personal",cat:C.SHOP,amt:()=>150}
+    ],
+    income:"NZ Super from 1 April 2026 (after tax, M code): couple both qualifying $1,708.16/fortnight ≈ $3,700/month; single living alone $1,110.30/fortnight ≈ $2,400/month. Retirees who rent will usually need KiwiSaver or other savings on top.",
+    tips:["Renting in retirement changes the picture completely — compare the rent toggle against NZ Super.","The Winter Energy Payment is added to NZ Super automatically each winter.","Get a SuperGold Card for free off-peak public transport and discounts."]},
+
+  intl1:{name:"International student — single",household:"1 student, renting a room in a flat or student hall. Tuition fees not included.",
+    items:[
+      {label:"Room in a flat or student hall",cat:C.RENT,amt:c=>W(c.rent.room)},
+      {label:"Groceries",cat:C.FOOD,amt:c=>ADULT*0.9*c.gf},
+      {label:"Power (your share)",cat:C.BILLS,amt:c=>60*c.pf},
+      {label:"Internet (your share)",cat:C.BILLS,amt:()=>25},
+      {label:"Mobile plan",cat:C.BILLS,amt:()=>30},
+      {label:"Public transport (student fares)",cat:C.TRANS,amt:c=>c.pt*0.75},
+      {label:"Student health & travel insurance",note:"Compulsory for student visa holders",cat:C.HEALTH,amt:()=>85},
+      {label:"Books, printing & stationery",cat:C.STUDY,amt:()=>50},
+      {label:"Eating out & social",cat:C.FUN,amt:()=>150},
+      {label:"Clothes & personal",cat:C.SHOP,amt:()=>100}
+    ],
+    income:"Immigration NZ asks student visa applicants to show NZ$20,000 per year for living costs (NZ$1,667/month) on top of tuition. Tertiary students can generally work up to 25 hours a week in term time (master's and PhD students have no weekly limit) — 25 hours at minimum wage is about $2,590/month before tax.",
+    tips:["Auckland and Wellington usually cost more than the NZ$1,667/month INZ minimum — budget a buffer.","Dunedin, Palmerston North and Invercargill are noticeably cheaper for students.","Check your visa conditions before taking a job; work limits depend on your course."]},
+
+  intl2:{name:"International student couple",household:"1 student + partner, renting a 1-bedroom flat. Tuition fees not included.",
+    items:[
+      {label:"1-bedroom flat",cat:C.RENT,amt:c=>W(c.rent.b1)},
+      {label:"Groceries (2 adults)",cat:C.FOOD,amt:c=>2*ADULT*0.9*0.95*c.gf},
+      {label:"Power",cat:C.BILLS,amt:c=>140*c.pf},
+      {label:"Internet",cat:C.BILLS,amt:()=>75},
+      {label:"Mobile plans (2)",cat:C.BILLS,amt:()=>60},
+      {label:"Public transport (student + partner)",cat:C.TRANS,amt:c=>c.pt*1.75},
+      {label:"Health & travel insurance (both)",cat:C.HEALTH,amt:()=>160},
+      {label:"Books, printing & stationery",cat:C.STUDY,amt:()=>50},
+      {label:"Eating out & social",cat:C.FUN,amt:()=>250},
+      {label:"Clothes & personal",cat:C.SHOP,amt:()=>180},
+      {label:"Emergency buffer",cat:C.SAVE,amt:()=>200}
+    ],
+    income:"The student shows NZ$20,000/year in living funds. Whether your partner can get an open work visa depends on your qualification level — a working partner usually makes this budget comfortable.",
+    tips:["Confirm partner work rights before you arrive; it changes your whole budget.","A 1-bedroom unit or a room in a couple-friendly flat are both common.","Keep your bank statements and funds history tidy for visa renewals."]},
+
+  intl3:{name:"International student family with kids",kids:true,careDefault:false,intlKids:true,
+    household:()=>`1 student + partner, ${kidsDesc()}, renting a ${studentHomeLabel().toLowerCase()}, one basic car. Tuition not included.`,
+    items:[
+      {id:"home",label:studentHomeLabel,cat:C.RENT,amt:studentHomeRent},
+      {id:"food",label:()=>`Groceries (2 adults, ${nK()} ${kidWord()})`,cat:C.FOOD,amt:c=>(2*ADULT*0.95+kidFood())*0.92*c.gf},
+      {label:"Power",cat:C.BILLS,amt:c=>(170+30*nK())*c.pf},
+      {label:"Internet",cat:C.BILLS,amt:()=>75},
+      {label:"Mobile plans (2)",cat:C.BILLS,amt:()=>60},
+      {label:"Car running costs (basic)",cat:C.TRANS,amt:c=>c.car*0.8},
+      {label:"Public transport (student fares)",cat:C.TRANS,amt:c=>c.pt*0.75},
+      {label:"Health & travel insurance (family)",cat:C.HEALTH,amt:()=>200+30*nK()},
+      {label:"Books, printing & stationery",cat:C.STUDY,amt:()=>50},
+      {kidsHere:true},
+      {label:"Family outings",cat:C.FUN,amt:()=>250},
+      {label:"Clothes & personal",cat:C.SHOP,amt:()=>200+30*nK()},
+      {label:"Emergency buffer",cat:C.SAVE,amt:()=>200}
+    ],
+    income:"School fees are the big question. Children are usually domestic students (free public school) if a parent holds a work visa — including a partner's work visa — or if the student parent is doing a PhD or approved exchange. Otherwise they pay international fees. Childcare lines start unticked: tick them if you need daycare or kindy.",
+    tips:["Tick the international school fees line for each school-age child if your partner has no work visa — it can more than double the budget.","Bring school records and immunisation history for enrolment.","Check whether your course gives your partner work rights before choosing it."]},
+
+  migrantWork:{name:"Migrant family with working visa",kids:true,careDefault:true,
+    household:()=>`2 adults (one or both on work visas), ${kidsDesc()}, renting a ${homeLabel().toLowerCase()}, one car.`,
+    items:[
+      {id:"home",label:homeLabel,cat:C.RENT,amt:homeRent},
+      {id:"food",label:()=>`Groceries (2 adults, ${nK()} ${kidWord()})`,cat:C.FOOD,amt:c=>(2*ADULT*0.95+kidFood())*c.gf},
+      {label:"Power",cat:C.BILLS,amt:c=>(200+30*nK())*c.pf},
+      {label:"Internet",cat:C.BILLS,amt:()=>80},
+      {label:"Mobile plans (2)",cat:C.BILLS,amt:()=>70},
+      {label:"Contents insurance",cat:C.BILLS,amt:()=>40},
+      {label:"Car running costs",cat:C.TRANS,amt:c=>c.car},
+      {label:"Public transport (1 commuter)",cat:C.TRANS,amt:c=>c.pt},
+      {kidsHere:true},
+      {label:"Private health insurance",note:"Check your public health eligibility — it depends on your visa length",cat:C.HEALTH,amt:()=>190+30*nK()},
+      {label:"Visa renewals & admin",cat:C.STUDY,amt:()=>100},
+      {label:"Residence fund",note:"Skilled Migrant Category visa fee NZ$6,450 + medicals & police certificates, saved over 12 months",cat:C.STUDY,amt:()=>660,opt:true,on:false},
+      {label:"Family outings & eating out",cat:C.FUN,amt:()=>300},
+      {label:"Clothes & personal",cat:C.SHOP,amt:()=>200+40*nK()},
+      {label:"Sending money home",cat:C.OTHER,amt:()=>300,opt:true,on:false},
+      {label:"Settling-in / emergency fund",cat:C.SAVE,amt:()=>400}
+    ],
+    income:"Work visa job offers lodged from 1 April 2026 must pay at least the minimum wage ($23.95/hour). Children of work visa holders are generally domestic students at primary and secondary school, so public school is fee-free. If you're heading for residence, tick the residence fund line.",
+    tips:["Your first 3 months cost more: bond (up to 4 weeks' rent), rent in advance, furniture and a car.","Keep a buffer for visa renewals and for gaps between jobs.","Check Working for Families and childcare subsidy eligibility — some depend on residence, so they may not apply yet."]}
+};
+
+/* ---------- guide logic ---------- */
+const r5=x=>Math.round(x/5)*5;
+const lab=it=>typeof it.label==="function"?it.label():it.label;
+function buildItems(sk){
+  const seg=SEGMENTS[sk], out=[];
+  seg.items.forEach(it=>{
+    if(!it.kidsHere){out.push(it);return;}
+    kids.ages.forEach((s,i)=>{
+      const n=i+1;
+      STAGES[s].items(n).forEach(k=>out.push(k));
+      if(seg.intlKids&&s==="school")out.push({id:`k${n}-intl`,label:`Child ${n}: international school fees`,note:"Only if your child is not a domestic student — about NZ$12,000–20,000 a year",cat:C.KIDS,amt:()=>1250,opt:true,on:false});
+    });
+  });
+  return out;
+}
+let guideOpts={};
+try{guideOpts=JSON.parse(localStorage.getItem(KEY+"-guide2"))||{};}catch(e){}
+function saveOpts(){try{localStorage.setItem(KEY+"-guide2",JSON.stringify(guideOpts));}catch(e){}}
+const optKey=(sk,it)=>sk+"|"+(it.id||lab(it));
+function itemOn(sk,it){
+  const k=optKey(sk,it);
+  if(k in guideOpts)return guideOpts[k];
+  if(!it.opt)return true;
+  return it.care?!!SEGMENTS[sk].careDefault:!!it.on;
+}
+function segTotal(sk,city){return buildItems(sk).reduce((a,it)=>a+(itemOn(sk,it)?r5(it.amt(city)):0),0);}
+
+$("gCity").innerHTML=Object.entries(CITIES).map(([k,c])=>`<option value="${k}">${c.name}</option>`).join("");
+$("gSeg").innerHTML=Object.entries(SEGMENTS).map(([k,s],i)=>`<option value="${k}">${i+1}. ${esc(s.name)}</option>`).join("");
+
+function renderKids(){
+  const seg=SEGMENTS[$("gSeg").value];
+  $("kidsBox").classList.toggle("hidden",!seg.kids);
+  if(!seg.kids)return;
+  $("kCount").value=String(nK());
+  $("kAges").innerHTML=kids.ages.map((s,i)=>`<div><label for="kAge${i}">Child ${i+1} age group</label><select id="kAge${i}" data-i="${i}">${
+    Object.entries(STAGES).map(([k,v])=>`<option value="${k}" ${k===s?"selected":""}>${esc(v.name)}</option>`).join("")}</select></div>`).join("");
+}
+
+function renderGuide(){
+  const ck=$("gCity").value, sk=$("gSeg").value, city=CITIES[ck], seg=SEGMENTS[sk];
+  renderKids();
+  $("gHousehold").textContent="Assumed household: "+(typeof seg.household==="function"?seg.household():seg.household);
+  $("gTitle").textContent=seg.name+" — "+city.name;
+  const items=buildItems(sk);
+  const rows=items.map(it=>{
+    const on=itemOn(sk,it), v=r5(it.amt(city)), key=optKey(sk,it);
+    const box=it.opt?`<input type="checkbox" class="chk" data-key="${esc(key)}" ${on?"checked":""} aria-label="Include ${esc(lab(it))}">`:"";
+    return `<tr class="${it.opt?"opt-row":""} ${on?"":"off"}"><td>${box}${esc(lab(it))}${it.note?`<span class="item-note">${esc(it.note)}</span>`:""}</td><td><span class="tag out">${esc(it.cat)}</span></td><td class="num">${fmtNZ(v)}</td></tr>`;
+  });
+  const total=segTotal(sk,city);
+  rows.push(`<tr class="total-row"><td>Total</td><td></td><td class="num">${fmtNZ(total)}</td></tr>`);
+  $("gBody").innerHTML=rows.join("");
+  $("gMonth").textContent=fmtNZ(total);
+  $("gWeek").textContent=fmtNZ(total*12/52);
+  $("gYear").textContent=fmtNZ(total*12);
+  $("gIncome").innerHTML="<b>Income & visa reference</b>"+esc(seg.income);
+  $("gTips").innerHTML=seg.tips.map(t=>`<li>${esc(t)}</li>`).join("");
+
+  const all=Object.entries(CITIES).map(([k,c])=>[k,c.name,segTotal(sk,c)]).sort((a,b)=>b[2]-a[2]);
+  const max=all[0][2];
+  $("gCompare").innerHTML=all.map(([k,n,v])=>`<div class="cmp ${k===ck?"cur":""}"><span>${esc(n)}</span><div class="track"><span style="width:${(v/max*100).toFixed(1)}%"></span></div><span class="v">${fmtNZ(v)}</span></div>`).join("")
+    +`<p class="note">Monthly total for “${esc(seg.name)}”${seg.kids?" with "+esc(kidsDesc()):""} and your current ticks.</p>`;
+}
+
+$("gCity").addEventListener("change",renderGuide);
+$("gSeg").addEventListener("change",renderGuide);
+$("kCount").addEventListener("change",e=>{
+  const n=parseInt(e.target.value,10);
+  while(kids.ages.length<n)kids.ages.push("school");
+  kids.ages=kids.ages.slice(0,n);saveKids();renderGuide();
+});
+$("kAges").addEventListener("change",e=>{
+  const i=e.target.dataset&&e.target.dataset.i;if(i===undefined)return;
+  kids.ages[+i]=e.target.value;saveKids();renderGuide();
+});
+$("gBody").addEventListener("change",e=>{
+  if(!e.target.classList.contains("chk"))return;
+  guideOpts[e.target.dataset.key]=e.target.checked;saveOpts();renderGuide();
+});
+$("useBudget").addEventListener("click",()=>{
+  const sk=$("gSeg").value, city=CITIES[$("gCity").value];
+  if(!confirm(`Replace your category budgets with the ${city.name} estimate for “${SEGMENTS[sk].name}”? (Amounts are in NZD.)`))return;
+  const b={};
+  buildItems(sk).forEach(it=>{if(itemOn(sk,it))b[it.cat]=(b[it.cat]||0)+r5(it.amt(city));});
+  state.budgets=b;state.currency="NZD";$("currency").value="NZD";save();render();showTab("planner");
+});
+
+/* ---------- tabs ---------- */
+function showTab(t){
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===t));
+  $("planner").classList.toggle("hidden",t!=="planner");
+  $("guide").classList.toggle("hidden",t!=="guide");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+
+fillCats();render();renderGuide();
+</script>
+</body>
+</html>
