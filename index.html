@@ -63,6 +63,17 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
 .note{color:var(--muted);font-size:.82rem;margin:10px 0 0}
 .foot{display:flex;gap:8px;flex-wrap:wrap}
 /* guide */
+.site-foot{margin-top:28px;padding-top:22px;border-top:1px solid var(--line)}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr;gap:24px}
+@media(max-width:700px){.foot-grid{grid-template-columns:1fr}}
+.site-foot h2{font-size:1.05rem;margin:0 0 8px}
+.site-foot h3{font-size:.9rem;margin:0 0 8px}
+.site-foot p{font-size:.9rem;margin:0 0 10px}
+.site-foot ul{list-style:none;padding:0;margin:0;font-size:.88rem}
+.site-foot li{margin:0 0 5px}
+.site-foot .badge{display:inline-block;background:var(--accent-soft);border-radius:999px;padding:6px 14px;font-size:.85rem}
+.foot-small{color:var(--muted);font-size:.78rem !important}
+
 .sch-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 @media(max-width:900px){.sch-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:520px){.sch-grid{grid-template-columns:1fr}}
@@ -126,7 +137,7 @@ ul.two-col li{break-inside:avoid}
   :root{--bg:#fff;--card:#fff;--ink:#1f2933;--muted:#555;--line:#ddd;--accent:#2f6f5e;--accent-soft:#eef5f1}
   body{background:#fff;font-size:11pt}
   .wrap{padding:0;max-width:none}
-  .tabs,#planner,#rent,#health,#tax,#trip,.foot,.map-hint,.chk,#gBody tr.off,.no-print{display:none !important}
+  .tabs,.site-foot,#planner,#rent,#health,#tax,#trip,.foot,.map-hint,.chk,#gBody tr.off,.no-print{display:none !important}
   #guide{display:block !important}
   .print-only{display:block}
   .print-head{font-size:9pt;color:#555;margin:-8px 0 12px}
@@ -662,6 +673,30 @@ ul.tips li{margin:4px 0}
       <p class="note">Estimates use fuel at about $2.95/L, Cook Strait ferry from about $180 for a car and driver, DOC and holiday park fees, and typical cabin, hostel and motel rates. Prices change by season — always check before you book.</p>
     </section>
   </main>
+
+  <footer class="site-foot">
+    <div class="foot-grid">
+      <div>
+        <h2>About Aotearoa Money Map</h2>
+        <p><b>Thinking of moving to New Zealand? Know what life really costs before you pack your bags.</b></p>
+        <p>Aotearoa Money Map is a free, all-in-one guide for anyone planning to live, study or settle in New Zealand. It turns the big question, <i>“Can we actually afford to live here?”</i>, into a clear, city-by-city money plan for students, families, migrants, retirees and everyone in between.</p>
+        <p class="badge">🎓 Part of the <b>Business Transformation</b> project class at <b>ICL Graduate Business School</b>, Auckland.</p>
+      </div>
+      <div>
+        <h3>What you can do here</h3>
+        <ul>
+          <li>💰 Track your monthly budget</li>
+          <li>🗺️ Compare living costs in 8 cities</li>
+          <li>🏡 Explore suburbs, schools and rents</li>
+          <li>🏥 Estimate health insurance</li>
+          <li>🧾 Work out your take-home pay</li>
+          <li>🏕️ Plan a budget Kiwi getaway</li>
+        </ul>
+      </div>
+    </div>
+    <p class="foot-small">🔒 No sign-up, no ads — everything you enter stays in your own browser. All figures are estimates based on late-2026 data and are a starting point for planning, not financial, tax, immigration or legal advice. Always check official sources such as IRD, Immigration New Zealand, Tenancy Services and Education Counts.</p>
+    <p class="foot-small">Kia ora, and welcome to Aotearoa! 🌿 · © 2026 Aotearoa Money Map</p>
+  </footer>
 </div>
 
 <script>
